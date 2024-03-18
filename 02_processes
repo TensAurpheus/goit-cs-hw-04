@@ -1,0 +1,44 @@
+from multiprocessing import Process, Queue
+from pathlib import Path
+from collections import defaultdict
+from time import time
+
+def search_in_file(file_path, keywords, output_queue):
+    results = defaultdict(list)
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+            for keyword in keywords:
+                if keyword in content:
+                    results[keyword].append(file_path.name)
+    except IOError as e:
+        print(f"Error reading file {file_path}: {e}")
+    output_queue.put(dict(results))
+
+def process_files_with_processes(file_paths, keywords, result_queue):
+    processes = []
+
+    for file_path in file_paths:
+        process = Process(target=search_in_file, args=(file_path, keywords, result_queue))
+        processes.append(process)
+        process.start()
+
+    for process in processes:
+        process.join()
+
+if __name__ == '__main__':
+    start_time = time()
+    file_paths = list(Path("./text").glob("*.txt"))
+    keywords = ["man", "both"]
+    result_queue = Queue()
+
+    process_files_with_processes(file_paths, keywords, result_queue)
+
+    final_results = defaultdict(list)
+    while not result_queue.empty():
+        result = result_queue.get()
+        for keyword, files in result.items():
+            final_results[keyword].extend(files)
+    
+    print(dict(final_results))
+    print(f"Time taken: {time() - start_time} seconds")
