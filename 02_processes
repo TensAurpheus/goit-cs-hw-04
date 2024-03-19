@@ -10,7 +10,7 @@ def search_in_file(file_path, keywords, output_queue):
             content = file.read()
             for keyword in keywords:
                 if keyword in content:
-                    results[keyword].append(file_path.name)
+                    results[keyword].append(file_path.as_posix())
     except IOError as e:
         print(f"Error reading file {file_path}: {e}")
     output_queue.put(dict(results))
@@ -28,7 +28,7 @@ def process_files_with_processes(file_paths, keywords, result_queue):
 
 if __name__ == '__main__':
     start_time = time()
-    file_paths = list(Path("./text").glob("*.txt"))
+    file_paths = list(Path("./text").rglob("*.txt"))
     keywords = ["man", "both"]
     result_queue = Queue()
 
